@@ -1,0 +1,11 @@
+data "aws_vpc" "incorta" {
+  id = "${var.vpc_id}"
+}
+
+data "aws_subnet" "incorta_a" {
+  id = "${var.webserver_subnet_a_id}"
+}
+
+data "aws_subnet" "incorta_b" {
+  id = "${var.webserver_subnet_a_id}"
+}

@@ -1,0 +1,131 @@
+pipeline {
+		
+    agent {
+        node 'DevOps_VM'
+    }   //Run everything on an agent with the docker daemon..
+	
+	options{
+        timestamps()
+        }
+	    
+	parameters {
+        string(defaultValue: 'ssh://git@bitbucket.mckesson.com:7999/eias/eias_pi_platform_app.git', description: 'build repo', name: 'BITBUCKET_URL')
+        string(defaultValue: 'Develop', description: 'branch to build', name: 'BRANCHNAME')
+        string(defaultValue: '3.0.0', description: 'current release', name: 'RELEASE_VERSION')
+        string(defaultValue: 'registry.mckesson.com/dhc9ht3/eias_app_pi_platform', description: 'registry', name: 'DockerRegistry')
+        string(defaultValue: 'eias-pi-platform-app', description: 'name of service', name: 'ServiceName')
+        //choice(choices: ['dev', 'tst'], description: 'PCF Space', name:'PcfDeploySpace')
+         //choices are newline separated
+	} 
+	
+	environment {
+        app_name = 'eias-pi-platform-app'
+        organization = 'MSH-Analytics'
+		JSONFILE_NAME = 'EIAS_Platformservices_Build_File_List.json'
+		FINAL_JSONFILE_FILE = 'EIAS_Platformservices_Build_File.json'
+        pcf_api = 'api.sys.dev-west.paas.mckesson.com'
+        pcf_user = 'd450h1m'
+		Space = 'dev'
+	}
+	
+	stages {
+	    stage ('set build properties') {
+	        steps {
+	            sh """
+	              set +x
+					ls -ltr
+					git checkout ${BRANCHNAME} && git pull
+					echo "currently on ${BRANCHNAME} branch"
+					git branch -v				
+					### passing parameters to properties file ###
+					echo "buildstamp=`date +%Y-%m-%d_%H-%M-%S`" > build.props
+					echo "buildcommit=`git rev-parse HEAD | cut -c 1-7 | sed 's/[\t++]//g'`" >> build.props
+					echo "buildbranch=${BRANCHNAME}" >> build.props
+					echo "headrevision=`git rev-list HEAD | wc -l | sed 's/[\t++]//g'`" >> build.props
+					echo "`git rev-parse HEAD | cut -c 1-7 | sed 's/[\t++]//g'`" > commit.txt	
+					cat build.props
+					cat commit.txt
+				   """
+				script {
+						// trim removes leading and trailing whitespace from the string
+					env.HEAD_COMMIT = readFile('commit.txt').trim()
+					env.IMAGE_TAG   = env.RELEASE_VERSION + "_" + env.HEAD_COMMIT
+				}	   
+	        }
+	    }
+	   
+        stage ('run tests and compile app') {
+	       steps {
+			   sh """
+			   set +x
+			   echo "release_version=${IMAGE_TAG}" >> build.props
+	           cd ${WORKSPACE}
+               ls -lh
+	           export CHROME_BIN=/usr/bin/chromium-browser
+	           echo -e "\n----- compiling after successful testing -----\n"
+               ./build.sh 
+			   """
+	        }
+	    }
+	   
+	   stage('update json file with build number') {
+				steps {
+					sh ''' set +x
+					cd /u01/data/build/
+					#Checking whether the File has the Build version or not and Updating json file for input in Rundeck 
+					if [  -z "$(cat $FINAL_JSONFILE_FILE | grep -w ${IMAGE_TAG})" ]
+					then
+					echo " Updating the json file to pass input to Rundeck "
+					sed -i '$s/}//' $JSONFILE_NAME ; echo "\""${HEAD_COMMIT}"\" : \"${IMAGE_TAG}\"" , >> $JSONFILE_NAME ; echo } >> $JSONFILE_NAME  ;
+					echo { > $FINAL_JSONFILE_FILE
+					tail -10 $JSONFILE_NAME >> $FINAL_JSONFILE_FILE
+					cat $FINAL_JSONFILE_FILE | grep -v "[{}]" | tail -1
+					else
+					echo -e " The file [ $BUILD_FILE ] already exists in the Json file "
+					fi		
+                    scp /u01/data/build/${FINAL_JSONFILE_FILE} sdlc@usawdlvwb022.ulab.usoncology.unx:/u02/data/build/					
+					'''			
+				}
+		}
+	   
+	   stage('push images to Mckesson registry') {
+	       steps {
+	          withDockerRegistry(credentialsId: 'a56c0953-6f08-499c-ad51-ede5aa9820d8', url: 'https://registry.mckesson.com') {
+	           sh """
+			   set +x
+	           cd ${WORKSPACE} && ls -lrt
+			   echo -e "\n----- taging and pushing images to ${DockerRegistry} -----\n"
+			   docker push  "${DockerRegistry}:${IMAGE_TAG}"
+	           """
+	          }
+	        }
+	    }
+		
+		stage('trigger downstream deploy to dev') {
+			steps {		
+			    script {
+				   build(job: "EIAS_PI_PLATFORM_APP_PCF_DEPLOY", propagate: false, wait: false,
+				     parameters:
+					 [extendedChoice(name: 'Space', value: "${Space}"),
+					 extendedChoice(name: 'ImageTag', value: "${IMAGE_TAG}")]
+				    )
+				}
+			}
+		}
+		
+	}
+	
+	post {
+			always {
+				echo 'clean up workspace for next build'
+				cleanWs() /* clean up our workspace */
+			}
+        
+			failure {
+				emailext body: "${JOB_NAME} Failed. Please  check console output for details", subject: 'Build Failed', to: 'andrews.owusu@mckesson.com,rajesh.joshi@mckesson.com,Alejandro.JavaleraRincon@McKesson.com,Vishwanath.Nimbala@McKesson.com,Subramanyam.Nanapu@McKesson.com'
+			}
+			changed {
+				emailext body: "${JOB_NAME} is back to normal. Please  check console output for details", subject: 'Build is Back To Normal', to: 'andrews.owusu@mckesson.com,rajesh.joshi@mckesson.com'
+			}
+	}	
+}
