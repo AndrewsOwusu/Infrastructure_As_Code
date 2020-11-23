@@ -38,28 +38,31 @@ pipeline {
 	    }
 
 			stage ('initialize terraform') {
-			 steps {
+			 	 steps {
 					sh """
+						 set +x
 						terraform init
 			    """
 				}
-		}
+		  }
 
         stage ('provision resources') {
-	       steps {
+	        steps {
 			   		sh """
+							 set +x
 			   			terraform apply -auto-approve
 			      """
 	        }
-	    }
+	      }
 
 			stage ('verify provisioned resources') {
-			 steps {
+			   steps {
 					sh """
+						 set +x
 						terraform state list && terraform show
 					"""
-				}
-		}
+				 }
+		  }
 
 	post {
 			always {
