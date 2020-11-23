@@ -53,12 +53,17 @@ pipeline {
 	        }
 	    }
 
+			stage ('verify provisioned resources') {
+			 steps {
+					sh """
+						terraform state list && terraform show
+					"""
+				}
+		}
+
 	post {
 			always {
-				echo 'verifying provisioned resources'
-				sh """
-					terraform state list && terraform show
-				"""
+				echo 'cleanup workspace for next run'
 				cleanWs() /* clean up our workspace */
 			}
 	}
