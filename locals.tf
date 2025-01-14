@@ -1,3 +1,3 @@
 locals {
-   subnet_list = ["subnet-0f2fafe5deb4fbade","subnet-0743cc49985c51027"]
+   subnet_list = ["subnet-0fee338485047a529","subnet-06e411804725fc34d"]
 }

@@ -29,7 +29,7 @@ variable "instance_type" {
 
 # Variable for the number of secondary IPs and subnets
 variable "secondary_private_ip_count" {
-  default = 2
+  default = 3
 }
 
 variable "secondary_private_ips" {

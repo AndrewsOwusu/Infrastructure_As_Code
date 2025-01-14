@@ -34,22 +34,22 @@ resource "aws_instance" "secondary_web" {
 }
 
 # # Data block to fetch CIDR block for each subnet defined in locals
-# data "aws_subnet" "selected_subnet" {
-#   count = length(local.subnet_list)
-#   id = local.subnet_list[count.index]
-# }
+data "aws_subnet" "selected_subnet" {
+  count = length(local.subnet_list)
+  id = local.subnet_list[count.index]
+}
 
 # # # Secondary Network Interface without using data block
-# resource "aws_network_interface" "secondary_interface" {
-#   count           = length(local.subnet_list)
-#   subnet_id       = local.subnet_list[count.index]  #var.subnet_id
-#   security_groups = [aws_security_group.web_sg.id]  # Replace with your actual security group ID
-# #   private_ips_cidr_block = data.aws_subnet.selected_subnet_0.cidr_block
+resource "aws_network_interface" "secondary_interface" {
+  count           = length(local.subnet_list)
+  subnet_id       = local.subnet_list[count.index]  #var.subnet_id
+  security_groups = [aws_security_group.web_sg.id]  # Replace with your actual security group ID
+#   private_ips_cidr_block = data.aws_subnet.selected_subnet_0.cidr_block
 
-# #   # Automatically assign secondary private IPs using the subnet_cidr_block variable directly
-#   private_ips = [for i in range(var.secondary_private_ip_count) : 
-#     cidrhost(data.aws_subnet.selected_subnet[count.index].cidr_block, i + 10)
-#   ]
+## Automatically assign secondary private IPs using the subnet_cidr_block variable directly
+  private_ips = [for i in range(var.secondary_private_ip_count) : 
+    cidrhost(data.aws_subnet.selected_subnet[count.index].cidr_block, i + 10)
+  ]
 
 # ### attach network interface
 #   attachment {
