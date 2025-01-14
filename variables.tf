@@ -33,6 +33,6 @@ variable "secondary_private_ip_count" {
 }
 
 variable "secondary_private_ips" {
-    description " list of privvate_ips to be attached as needed"
+    description = " list of private_ips to be attached as needed"
     default = null 
 }
