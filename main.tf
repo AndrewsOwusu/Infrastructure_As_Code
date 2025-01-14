@@ -5,7 +5,7 @@ resource "aws_instance" "web_instance" {
   instance_type   = "t3.micro"
   subnet_id       = aws_subnet.public_subnet.id
   #key_name        = aws_key_pair.my_key_pair.key_name
-  security_groups = [aws_security_group.web_sg.name]
+  security_groups = [aws_security_group.web_sg.id]
   associate_public_ip_address = true
 
   tags = {
