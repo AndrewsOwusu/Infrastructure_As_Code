@@ -26,3 +26,8 @@ variable "instance_type" {
   description = "Type of EC2 instance"
   default     = "t3.micro"
 }
+
+# Variable for the number of secondary IPs and subnets
+variable "secondary_private_ip_count" {
+  default = 2
+}

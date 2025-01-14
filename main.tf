@@ -16,6 +16,18 @@ resource "aws_instance" "web_instance" {
 #     id = local.subnet_list[count.index]
 # }
 
+# # Secondary Network Interface without using data block
+resource "aws_network_interface" "secondary_interface" {
+  subnet_id       = local.subnet_list[0]  #var.subnet_id
+  security_groups = [aws_security_group.web_sg.id]  # Replace with your actual security group ID
+
+#   # Automatically assign secondary private IPs using the subnet_cidr_block variable directly
+  private_ips = [for i in range(var.secondary_private_ip_count) : 
+    cidrhost(local.subnet_list[0].cidr_block, i + 10)
+  ]
+
+}
+
 # webserver2_and_3
 resource "aws_instance" "secondary_web" {
   count           = length(local.subnet_list)
@@ -27,10 +39,10 @@ resource "aws_instance" "secondary_web" {
   associate_public_ip_address = true
 
 ### attach network interface
-#   network_interface {
-#     network_interface_id = aws_network_interface.secondary_interface.id
-#     device_index         = 1
-#   }
+  network_interface {
+    network_interface_id = aws_network_interface.secondary_interface.id
+    device_index         = 1
+  }
 
   tags = {
     Name = "PublicWebServer_${count.index}"
