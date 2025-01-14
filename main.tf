@@ -38,7 +38,7 @@ resource "aws_instance" "secondary_web" {
   subnet_id       = local.subnet_list[count.index]
   #key_name        = aws_key_pair.my_key_pair.key_name
   security_groups = [aws_security_group.web_sg.id]
-  associate_public_ip_address = true
+  #associate_public_ip_address = true
 
 ### attach network interface
   network_interface {
