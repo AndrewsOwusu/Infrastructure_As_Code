@@ -8,7 +8,7 @@ resource "aws_instance" "web_instance" {
   associate_public_ip_address = true
 
   tags = {
-    Name = "PublicWebServer_1"
+    Name = "PublicWebServer_main"
   }
 }
 
