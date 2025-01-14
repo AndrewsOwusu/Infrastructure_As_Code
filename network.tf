@@ -88,8 +88,3 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-
-# Variable for the number of private IPs to assign
-variable "secondary_private_ip_count" {
-  default = 2
-}
