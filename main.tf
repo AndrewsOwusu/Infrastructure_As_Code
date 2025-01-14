@@ -52,13 +52,13 @@ resource "aws_network_interface" "secondary_interface" {
   ]
 
 # ### attach network interface
-#   attachment {
-#     # instance = "PublicWebServer_${count.index}"
-#     instance = aws_instance.secondary_web[count.index].id
-#     device_index         = 1
-#   }
+  attachment {
+    # instance = "PublicWebServer_${count.index}"
+    instance = aws_instance.secondary_web[count.index].id
+    device_index         = 1
+  }
 
-# }
+}
 
 
 # ### attach network interface
