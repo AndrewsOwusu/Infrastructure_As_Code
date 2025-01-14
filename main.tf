@@ -47,7 +47,7 @@ resource "aws_network_interface" "secondary_interface" {
 
 #   # Automatically assign secondary private IPs using the subnet_cidr_block variable directly
   private_ips = [for i in range(var.secondary_private_ip_count) : 
-    cidrhost(data.aws_subnet.selected_subnet.id.cidr_block, i + 10)
+    cidrhost(data.aws_subnet.selected_subnet[count.index].cidr_block, i + 10)
   ]
 
 ### attach network interface
