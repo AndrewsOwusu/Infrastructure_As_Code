@@ -18,7 +18,7 @@ resource "aws_instance" "web_instance" {
 
 # webserver2_and_3
 resource "aws_instance" "secondary_web" {
-  count           = lenght(local.subnet_list)
+  count           = length(local.subnet_list)
   ami             = "ami-0c695cc059ad095e9"  # Amazon Linux 2 AMI (Update if necessary)
   instance_type   = "t3.micro"
   subnet_id       = local.subnet_list[count.index]
