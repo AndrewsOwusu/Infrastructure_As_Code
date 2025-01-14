@@ -31,3 +31,8 @@ variable "instance_type" {
 variable "secondary_private_ip_count" {
   default = 2
 }
+
+variable "secondary_private_ips" {
+    description " list of privvate_ips to be attached as needed"
+    default = null 
+}
